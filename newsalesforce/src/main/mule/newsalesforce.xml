@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config" doc:id="a48dae7c-f801-4289-9ed1-2ed027c4f7a2" >
+		<salesforce:basic-connection username="akansha326@agentforce.com" password="9zyqj6k22F8Wa" securityToken="l9kYp8JgWz9qJLJlMHFJsIdCC" url="https://login.salesforce.com/services/Soap/u/57.0" />
+	</salesforce:sfdc-config>
+	<salesforce:sfdc-config name="Salesforce_Config1" doc:name="Salesforce Config" doc:id="1823c09f-dfa3-470c-9610-11c6cb71e799" >
+		<salesforce:basic-connection username="ashu1505.sharma.d787abd953b4@agentforce.com" password="Akansha@1" securityToken="a0KkxekhGarATEGPhdkzd9aH" url="https://login.salesforce.com/services/Soap/u/57.0" />
+	</salesforce:sfdc-config>
+	<salesforce:sfdc-config name="Salesforce_Config2" doc:name="Salesforce Config" doc:id="e87ad646-11de-42bc-90fd-7d10a237d4b7" >
+		<salesforce:basic-connection username="ashu1505.sharma.d787abd953b4@agentforce.com" password="Akansha@1" securityToken="a0KkxekhGarATEGPhdkzd9aH" url="https://login.salesforce.com/services/Soap/u/57.0" />
+	</salesforce:sfdc-config>
+	<flow name="newsalesforceFlow1" doc:id="c7e6b40d-0fe4-4d48-aad2-8eea9da45b92" >
+		<salesforce:replay-channel-listener doc:name="Replay channel listener" doc:id="5095daca-6976-4237-bc37-10ea245746d5" config-ref="Salesforce_Config2" streamingChannel="/data/AccountChangeEvent" replayOption="ONLY_NEW"/>
+		<!-- [STUDIO:"Transform Message"]<ee:transform doc:name="Transform Message" doc:id="b0fa00f9-a39c-4194-9556-3ab4e9c14eaf" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+&#45;&#45;-
+payload.data.payload&#93;&#93;></ee:set-payload>
+			</ee:message>
+		</ee:transform> [STUDIO] -->
+		<!-- [STUDIO:"Set Variable"]<set-variable value="#[payload.data.payload&#93;" doc:name="Set Variable" doc:id="622aec73-51b0-4a93-b236-3c040fcb225f" variableName="sourceRecord"/> [STUDIO] -->
+		<ee:transform doc:name="Transform Message" doc:id="5a4a7825-6b6d-470b-a2f1-6b512982294a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="eaccd7b6-6aa2-49b5-a3d3-ef0c0e1b95fe" message="#[payload]"/>
+		<set-variable  value='#[%dw 2.0&#10;output application/java&#10;---&#10;{&#10;  Id: payload.data.payload.ChangeEventHeader.recordIds[0],&#10;  Name: payload.data.payload.Name&#10;}]' doc:name="recordIdofB" doc:id="a1299a32-0c3a-45d8-83f4-5f0698a68cdd" variableName="recordId"/>
+		<!-- [STUDIO:"Transform Message"]<ee:transform doc:name="Transform Message" doc:id="2e3219bf-53b3-421f-912c-6ae4e197e309" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+&#45;&#45;-
+
+	payload
+&#93;&#93;></ee:set-payload>
+			</ee:message>
+		</ee:transform> [STUDIO] -->
+		<logger level="INFO" doc:name="Logger" doc:id="f30abea5-27fc-420a-ab3a-549d176fc1bc" message="#[vars.recordId]"/>
+		<!-- [STUDIO:"setvariaId"]<logger level="INFO" doc:name="setvariaId" doc:id="05e7935d-8325-43e5-ad4e-b70c72934524" message="#[vars.recordId&#93;"/> [STUDIO] -->
+		<salesforce:query doc:name="Query" doc:id="b54985f2-4fba-42e2-81ee-8aebc0ffec72" config-ref="Salesforce_Config1">
+			<salesforce:salesforce-query ><![CDATA[Select id , Ext_Id__c from Account where Id = ':recordId']]>
+			</salesforce:salesforce-query>
+			<salesforce:parameters ><![CDATA[#[output application/java
+---
+{
+	"recordId" : vars.recordId.Id
+}]]]></salesforce:parameters>
+		</salesforce:query>
+		<!-- [STUDIO:"Transform Message"]<ee:transform doc:name="Transform Message" doc:id="85cac1a0-0d0f-4584-9d4b-d66afa3341c8" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+&#45;&#45;-
+
+	payload
+&#93;&#93;></ee:set-payload>
+			</ee:message>
+		</ee:transform> [STUDIO] -->
+		<logger level="INFO" doc:name="Logger" doc:id="1c326c54-7de9-433c-b265-2a5d3e49a6a4" message="#[payload]"/>
+		<set-variable  value="#[payload[0].Ext_Id__c]" doc:name="Set Variable" doc:id="2e88fb80-8e06-4c5f-acd7-9e3ee10ae4c1" variableName="extId"/>
+		<logger level="INFO" doc:name="extIdstring" doc:id="c18d7ef4-4f59-4e1b-8e21-49cc025e268f" message="#[vars.extId]"/>
+		<salesforce:query doc:name="Query" doc:id="9ba675f0-6fff-4ec8-a52a-2626e220bad1" config-ref="Salesforce_Config">
+			<salesforce:salesforce-query ><![CDATA[SELECT Id, Name
+FROM Account
+WHERE Id= ':extId' ]]></salesforce:salesforce-query>
+			<salesforce:parameters ><![CDATA[#[output application/java
+---
+{
+	"extId" : vars.extId
+}]]]></salesforce:parameters>
+		</salesforce:query>
+		<!-- [STUDIO:"Transform Message"]<ee:transform doc:name="Transform Message" doc:id="3ae7e309-5fc9-45b5-81bf-bc9ec77f33a6" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+&#45;&#45;-
+payload&#93;&#93;></ee:set-payload>
+			</ee:message>
+		</ee:transform> [STUDIO] -->
+		<logger level="INFO" doc:name="Logger" doc:id="90a6c898-4644-4081-92c4-bac6aec8c4bb" message="#[payload]"/>
+		<ee:transform doc:name="Transform Message" doc:id="238f638d-fb93-42b4-976c-3bff68d20052" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+[
+  {
+    Id: vars.extId,
+    Name: vars.recordId.Name
+   // LastModifiedDate: vars.sourceRecord.data.payload.LastModifiedDate
+  }
+]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="1dedafdb-b8bc-460c-926b-ba97b6fc241f" message="#[payload]" />
+		<salesforce:update type="Account" doc:name="Update" doc:id="c72433f1-d04d-400d-95e9-287c9e872cd5" config-ref="Salesforce_Config">
+					<salesforce:records><![CDATA[#[output application/json
+---
+payload]]]></salesforce:records>
+				</salesforce:update>
+		<!-- [STUDIO:"Choice"]<choice doc:name="Choice" doc:id="a2ce0d6b-84c5-4d81-99f9-f91b456e4041" >
+		</choice> [STUDIO] -->
+	</flow>
+	<flow name="newsalesforceFlow" doc:id="b73c2e04-20a5-4fdb-9803-c6d87d375e60" >
+		<salesforce:new-object-listener objectType="Account" doc:name="On New Object" doc:id="da2795ba-e6b2-4cfd-af2d-9cd7b552cf20" config-ref="Salesforce_Config" since="2026-03-01 05:02:30">
+			<reconnect-forever />
+			<scheduling-strategy >
+				<fixed-frequency />
+			</scheduling-strategy>
+		</salesforce:new-object-listener>
+		<!-- [STUDIO:"Transform Message"]<ee:transform doc:name="Transform Message" doc:id="f20dad81-a8d9-4c25-8668-a9e2c819380e" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+&#45;&#45;-
+payload&#93;&#93;></ee:set-payload>
+			</ee:message>
+		</ee:transform> [STUDIO] -->
+		<logger level="INFO" doc:name="Logger" doc:id="12c0adf0-d9d8-4c6e-9ccd-b90297b14830" message="#[payload]"/>
+		<set-variable value="#[payload]" doc:name="Set Variable" doc:id="7236fb25-5a39-46b9-8a3f-269585f3a2fc" variableName="varAccountData"/>
+		<ee:transform doc:name="Transform Message" doc:id="aabd06c3-09d8-4fd7-a9b2-2e7597a3a39e" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+var data = vars.varAccountData
+---
+[
+{	
+	Ext_Id__c : data.Id,
+    Name: data.Name,
+    Type: data.Type, 
+    //Tier__c: data.Tier__c,
+    //Total_Amount__c: data.Total_Amount__c,
+    //Customer_Status__c: data.Customer_Status__c,
+    //Rating: data.Rating,
+    //CurrencyIsoCode: data.CurrencyIsoCode
+}
+]
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:create doc:name="Create" doc:id="1273320b-520e-4596-9705-935ff20a5217" config-ref="Salesforce_Config1" type="Account"/>
+		<logger level="INFO" doc:name="Logger" doc:id="a7113464-1eb3-4724-b069-66663745a9ce" message='#["created"]'/>
+	</flow>
+</mule>
